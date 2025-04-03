@@ -17,41 +17,29 @@ package ca.ab.concordia.privacyIDEAtfa;
 
 import java.io.IOException;
 import java.io.StringReader;
-import java.net.URI;
 import java.security.KeyManagementException;
 import java.security.KeyStoreException;
 import java.security.NoSuchAlgorithmException;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.HashMap;
 
 import javax.json.Json;
 import javax.json.JsonObject;
-import javax.json.JsonArray;
 import javax.json.JsonReader;
 import javax.net.ssl.SSLContext;
 
 import org.apache.http.HttpEntity;
-import org.apache.http.HttpStatus;
-import org.apache.http.auth.AuthScope;
-import org.apache.http.auth.UsernamePasswordCredentials;
-import org.apache.http.client.CookieStore;
-import org.apache.http.client.CredentialsProvider;
 import org.apache.http.client.methods.CloseableHttpResponse;
 import org.apache.http.client.methods.HttpGet;
 import org.apache.http.client.methods.HttpPost;
-import org.apache.http.client.protocol.HttpClientContext;
 import org.apache.http.client.utils.URIBuilder;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.conn.ssl.SSLContextBuilder;
 import org.apache.http.conn.ssl.TrustSelfSignedStrategy;
-import org.apache.http.cookie.Cookie;
-import org.apache.http.impl.client.BasicCookieStore;
-import org.apache.http.impl.client.BasicCredentialsProvider;
 import org.apache.http.impl.client.CloseableHttpClient;
 import org.apache.http.impl.client.HttpClients;
 import org.apache.http.util.EntityUtils;
-
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -68,11 +56,13 @@ public class piConnection {
   protected String              piServer;
   protected String              tfaAuthToken;
   protected String              clientIP;
+  protected String              entityID;
 
   // Sets up class objects (HTTP client, Decoders)
-  public piConnection(String piServer, Boolean checkCertificate, String clientIP) throws piSessionException {
+  public piConnection(String piServer, Boolean checkCertificate, String clientIP,String entityID) throws piSessionException {
     this.piServer = piServer;
     this.clientIP = clientIP;
+    this.entityID = entityID;
     
     httpClient    = getHttpClient(checkCertificate);
     //httpContext   = getHttpContext("admin", "blah");
@@ -94,7 +84,7 @@ public class piConnection {
     CloseableHttpResponse response = null;
 
     try {
-      URIBuilder uriBuilder = new URIBuilder().setScheme("https")
+      URIBuilder uriBuilder = new URIBuilder().setScheme("http")
           .setHost(piServer)
           .setPath(path);
 
@@ -110,8 +100,15 @@ public class piConnection {
       HttpGet httpget = new HttpGet(uriBuilder.build());
 
       if(!Strings.isNullOrEmpty(clientIP)) {
-        httppost.addHeader("X-Forwarded-For",clientIP);
-        httpget.addHeader("X-Forwarded-For",clientIP);
+        final String IPHeaderName = "X-Forwarded-For";
+        httppost.addHeader(IPHeaderName,clientIP);
+        httpget.addHeader(IPHeaderName,clientIP);
+      }
+
+      if(!Strings.isNullOrEmpty(entityID)) {
+        final String ServiceHeaderName = "ServiceID"; 
+        httppost.addHeader(ServiceHeaderName,entityID);
+        httpget.addHeader(ServiceHeaderName,entityID);
       }
 
       if (authRequired == true) {
