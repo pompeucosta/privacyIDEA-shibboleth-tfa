@@ -19,8 +19,11 @@ import java.util.List;
 
 import javax.annotation.Nonnull;
 import javax.security.auth.Subject;
+import javax.servlet.http.HttpServletRequest;
 
 import com.google.common.base.Function;
+import com.google.common.base.Strings;
+
 import org.opensaml.profile.context.ProfileRequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -82,6 +85,21 @@ public class TokenValidator extends AbstractValidationAction {
 		}
 		return null;
 	}
+
+	protected String getClientIP() {
+		final HttpServletRequest request = getHttpServletRequest();
+
+		String clientIP = request.getRemoteAddr();
+		String forwardFor = request.getHeader("X-Forwarded-For");
+		logger.debug("forwarded for header: {}", forwardFor);
+
+		if(!Strings.isNullOrEmpty(forwardFor)) {
+		clientIP = forwardFor.split(",")[0];
+		}
+
+		logger.debug("Client IP addr: {} ", clientIP);
+		return clientIP;
+	}
 	
 	@Override
 	protected void doExecute(@Nonnull final ProfileRequestContext profileRequestContext,
@@ -93,7 +111,8 @@ public class TokenValidator extends AbstractValidationAction {
 		logger.debug("{} TokenValidator is called with token {} for user {}", getLogPrefix(), tokenCtx.getToken(), username);
 
 		try {
-      piConnection connection = new piConnection(host, checkCert);
+	  String clientIP = getClientIP();
+      piConnection connection = new piConnection(host, checkCert,clientIP);
       connection.authenticateConnection(serviceUsername, servicePassword);
       
       List<piTokenInfo> tokenList = connection.getTokenList(username);

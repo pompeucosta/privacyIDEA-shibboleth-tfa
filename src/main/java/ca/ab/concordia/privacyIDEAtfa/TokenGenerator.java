@@ -18,6 +18,7 @@ package ca.ab.concordia.privacyIDEAtfa;
 import java.util.List;
 
 import javax.annotation.Nonnull;
+import javax.servlet.http.HttpServletRequest;
 
 import net.shibboleth.idp.authn.context.AuthenticationContext;
 import net.shibboleth.idp.authn.context.SubjectContext;
@@ -29,6 +30,8 @@ import net.shibboleth.utilities.java.support.component.ComponentInitializationEx
 import net.shibboleth.utilities.java.support.component.ComponentSupport;
 
 import com.google.common.base.Function;
+import com.google.common.base.Strings;
+
 import org.opensaml.profile.context.ProfileRequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -97,7 +100,9 @@ public class TokenGenerator extends AbstractProfileAction {
     logger.debug("Entering GenerateNewToken doExecute");
 			
     try {
-      piConnection connection = new piConnection(host, checkCert);
+
+	  String clientIP = getClientIP();
+      piConnection connection = new piConnection(host, checkCert,clientIP);
       connection.authenticateConnection(serviceUsername, servicePassword);
       
       List<piTokenInfo> tokenList = connection.getTokenList(username);
@@ -125,7 +130,8 @@ public class TokenGenerator extends AbstractProfileAction {
   public boolean tokenExistsForUser(String username) {
     logger.debug("Checking if user has one or more tokens");
     try {
-      piConnection connection = new piConnection(host, checkCert);
+	  String clientIP = getClientIP();
+      piConnection connection = new piConnection(host, checkCert,clientIP);
       connection.authenticateConnection(serviceUsername, servicePassword);
       
       List<piTokenInfo> tokenList = connection.getTokenList(username);
@@ -139,6 +145,21 @@ public class TokenGenerator extends AbstractProfileAction {
 		}
     return false;
 
+  }
+
+  protected String getClientIP() {
+	final HttpServletRequest request = getHttpServletRequest();
+
+	String clientIP = request.getRemoteAddr();
+	String forwardFor = request.getHeader("X-Forwarded-For");
+	logger.debug("forwarded for header: {}", forwardFor);
+
+	if(!Strings.isNullOrEmpty(forwardFor)) {
+	  clientIP = forwardFor.split(",")[0];
+	}
+
+	logger.debug("Client IP addr: {} ", clientIP);
+	return clientIP;
   }
   
   

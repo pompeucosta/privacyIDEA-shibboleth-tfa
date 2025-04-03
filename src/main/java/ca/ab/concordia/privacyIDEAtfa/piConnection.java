@@ -55,6 +55,8 @@ import org.apache.http.util.EntityUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import com.google.common.base.Strings;
+
 
 public class piConnection {
 
@@ -65,10 +67,12 @@ public class piConnection {
   //protected HttpClientContext   httpContext;
   protected String              piServer;
   protected String              tfaAuthToken;
+  protected String              clientIP;
 
   // Sets up class objects (HTTP client, Decoders)
-  public piConnection(String piServer, Boolean checkCertificate) throws piSessionException {
+  public piConnection(String piServer, Boolean checkCertificate, String clientIP) throws piSessionException {
     this.piServer = piServer;
+    this.clientIP = clientIP;
     
     httpClient    = getHttpClient(checkCertificate);
     //httpContext   = getHttpContext("admin", "blah");
@@ -94,6 +98,7 @@ public class piConnection {
           .setHost(piServer)
           .setPath(path);
 
+
       // Add GET/POST variables to HTTP call.
       for (Map.Entry<String, String> param : parameters.entrySet()) {
          //System.out.print("Key is: "+ param.getKey() + " & Value is: ");
@@ -104,11 +109,16 @@ public class piConnection {
       HttpPost httppost = new HttpPost(uriBuilder.build());
       HttpGet httpget = new HttpGet(uriBuilder.build());
 
+      if(!Strings.isNullOrEmpty(clientIP)) {
+        httppost.addHeader("X-Forwarded-For",clientIP);
+        httpget.addHeader("X-Forwarded-For",clientIP);
+      }
+
       if (authRequired == true) {
         if (isAuthenticated() == true) {
           httppost.addHeader("Authorization" , tfaAuthToken);
           httpget.addHeader("Authorization" , tfaAuthToken);
-        } else {
+      } else {
           System.out.println("You must authenticate first!");
         }
       }
