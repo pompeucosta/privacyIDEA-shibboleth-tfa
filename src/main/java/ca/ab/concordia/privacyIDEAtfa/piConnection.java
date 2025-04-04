@@ -84,7 +84,7 @@ public class piConnection {
     CloseableHttpResponse response = null;
 
     try {
-      URIBuilder uriBuilder = new URIBuilder().setScheme("http")
+      URIBuilder uriBuilder = new URIBuilder().setScheme("https")
           .setHost(piServer)
           .setPath(path);
 
