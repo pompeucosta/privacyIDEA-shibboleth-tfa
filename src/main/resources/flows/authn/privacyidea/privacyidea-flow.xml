@@ -21,13 +21,64 @@
 
   <var name="currentTime" class="java.util.Date" />
 
-  <on-start>
+  <!-- <on-start>
       <evaluate expression="SetRPUIInformation" />
       <evaluate expression="TokenGenerator" />
-  </on-start>
+  </on-start> -->
+  <action-state id="initPIContext">
+    <evaluate expression="initPIContext"/>
+    <evaluate expression="'proceed'"/>
 
+    <transition on="proceed" to="checkAuthenticationFlow"/>
+  </action-state>
 
-  <view-state id="DisplayPrivacyIdeaPage" view="privacyidea">
+  <action-state id="checkAuthenticationFlow">
+    <evaluate expression="alternativeAuthenticationFlows"/>
+    <evaluate expression="'proceed'"/>
+
+    <transition on="proceed" to="displayPrivacyIDEAForm"/>
+    <transition on="success" to="proceed"/>
+  </action-state>
+
+  <view-state id="displayPrivacyIDEAForm" view="main">
+    <on-render>
+        <evaluate expression="environment" result="viewScope.environment"/>
+        <evaluate expression="opensamlProfileRequestContext" result="viewScope.profileRequestContext"/>
+        <evaluate expression="opensamlProfileRequestContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationContext))"
+                  result="viewScope.authenticationContext"/>
+        <evaluate expression="opensamlProfileRequestContext.getSubcontext(T(net.shibboleth.idp.profile.context.ProfileInterceptorContext))"
+                  result="viewScope.interceptorContext"/>
+        <evaluate expression="opensamlProfileRequestContext.getSubcontext(T(net.shibboleth.idp.profile.context.RelyingPartyContext))"
+                  result="viewScope.rpContext"/>
+        <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.ui.context.RelyingPartyUIContext))"
+                  result="viewScope.rpUIContext"/>
+        <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationErrorContext))"
+                  result="viewScope.authenticationErrorContext"/>
+        <evaluate expression="authenticationContext.getSubcontext(T(net.shibboleth.idp.authn.context.AuthenticationWarningContext))"
+                  result="viewScope.authenticationWarningContext"/>
+        <evaluate expression="T(net.shibboleth.utilities.java.support.codec.HTMLEncoder)" result="viewScope.encoder"/>
+        <evaluate expression="flowRequestContext.getExternalContext().getNativeRequest()" result="viewScope.request"/>
+        <evaluate expression="flowRequestContext.getExternalContext().getNativeResponse()" result="viewScope.response"/>
+        <evaluate expression="flowRequestContext.getActiveFlow().getApplicationContext().containsBean('shibboleth.CustomViewContext')
+                  ? flowRequestContext.getActiveFlow().getApplicationContext().getBean('shibboleth.CustomViewContext') : null"
+                  result="viewScope.custom"/>
+
+        <evaluate expression="authenticationContext.getSubcontext(T(org.privacyidea.context.PIContext))" result="viewScope.piContext"/>
+        <evaluate expression="authenticationContext.getSubcontext(T(org.privacyidea.context.PIFormContext))" result="viewScope.piFormContext"/>
+    </on-render>
+
+    <transition on="proceed" to="piAuthenticator"/>
+  </view-state>
+
+  <action-state id="piAuthenticator">
+    <evaluate expression="piAuthenticator"/>
+
+    <transition on="reload" to="displayPrivacyIDEAForm"/>
+    <transition on="abort" to="RestartAuthentication"/>
+    <transition on="success" to="proceed"/>
+  </action-state>
+
+  <!-- <view-state id="DisplayPrivacyIdeaPage" view="privacyidea">
     <on-render>
       <evaluate expression="environment" result="viewScope.environment"/>
       <evaluate expression="opensamlProfileRequestContext" result="viewScope.profileRequestContext" />
@@ -40,9 +91,9 @@
       <evaluate expression="flowRequestContext.getExternalContext().getNativeResponse()" result="viewScope.response" />
     </on-render>
     <transition on="proceed" to="ExtractPrivacyIdeaFromForm"/>
-  </view-state>
+  </view-state> -->
 
-  <action-state id="ExtractPrivacyIdeaFromForm">
+  <!-- <action-state id="ExtractPrivacyIdeaFromForm">
     <evaluate expression="ExtractTokenFromForm" />
     <evaluate expression="'proceed'" />
 
@@ -54,15 +105,13 @@
     <evaluate expression="privacyIdeaTokenValidator"/>
     <evaluate expression="'proceed'"/>
 
-    <!-- At the moment user is redirected back to the totp form is he/she hasn't registered token -->
     <transition on="AccountError" to="DisplayPrivacyIdeaPage" />
 
     <transition on="proceed" to="proceed"/>
 
-    <!-- On all errors, transition back to 2fa form -->
     <transition to="DisplayPrivacyIdeaPage" />
-  </action-state>
+  </action-state> -->
         
-        <bean-import resource="../../../conf/authn/privacyidea-authn-beans.xml" />
+  <bean-import resource="../../../conf/authn/privacyidea-authn-beans.xml" />
 
 </flow>

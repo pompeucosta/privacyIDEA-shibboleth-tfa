@@ -50,58 +50,10 @@
         factor is required.
         -->
         <entry key="authn/Password">
-            <bean parent="shibboleth.authn.MFA.Transition" p:nextFlowStrategy-ref="checkFor2FAToken" />
+            <bean parent="shibboleth.authn.MFA.Transition" p:nextFlow="authn/privacyidea" />
         </entry>
         
         <!-- An implicit final rule will return whatever the final flow returns. -->
     </util:map>
-
-    <bean id="tokenGenerator" class="ca.ab.concordia.privacyIDEAtfa.TokenGenerator"
-                p:httpServletRequest-ref="shibboleth.HttpServletRequest"
-                p:host="%{pi.Host:localhost}"
-                p:serviceUsername="%{pi.Serviceuser:admin}"
-                p:servicePassword="%{pi.Servicepassword:secret}"
-                p:checkCert="%{pi.Checkcert:true}"
-                p:createEmailToken="%{pi.CreateEmailToken:false}" />
-
-    <bean id="checkFor2FAToken" parent="shibboleth.ContextFunctions.Scripted" factory-method="inlineScript"
-        p:customObject-ref="tokenGenerator">
-        <constructor-arg>
-            <value>
-            <![CDATA[
-                nextFlow = "authn/privacyidea";
-
-                logger = Java.type("org.slf4j.LoggerFactory").getLogger("checkFor2FAToken");
-                logger.debug("Checking if user is enabled for 2FA");
-
-
-                authCtx = input.getSubcontext("net.shibboleth.idp.authn.context.AuthenticationContext");
-                mfaCtx = authCtx.getSubcontext("net.shibboleth.idp.authn.context.MultiFactorAuthenticationContext");
-
-                if (mfaCtx.isAcceptable()) {
-
-                  // Get username
-                  usernameLookupStrategyClass = Java.type("net.shibboleth.idp.session.context.navigate.CanonicalUsernameLookupStrategy");
-                  usernameLookupStrategy = new usernameLookupStrategyClass();
-                  username = usernameLookupStrategy.apply(input);
-                  logger.debug("Looking up user: {}", username);
-       
-                  tokenExists = custom.tokenExistsForUser(username);
-                  
-                  if (tokenExists == false) {
-                    logger.debug("No token found for {}.  Skipping 2FA screen.", username);
-                    nextFlow = null;
-                  } else {
-                    logger.debug("Token(s) found for {}. Proceeding to authentication.", username);
-                  }
-                }
-
-                nextFlow;   // pass control to second factor or end with the first
-            ]]>
-            </value>
-        </constructor-arg>
-    </bean>
-
-
 
 </beans>
