@@ -20,7 +20,6 @@ import java.util.Objects;
 import javax.annotation.Nonnull;
 import javax.servlet.http.HttpServletRequest;
 
-// import jakarta.servlet.http.HttpServletRequest;
 import org.opensaml.profile.action.ActionSupport;
 import org.opensaml.profile.context.ProfileRequestContext;
 import org.privacyidea.PIResponse;
@@ -47,6 +46,12 @@ public class AlternativeAuthenticationFlows extends ChallengeResponseAction
 
             HttpServletRequest request = Objects.requireNonNull(getHttpServletRequest());
             Map<String, String> headers = this.getHeadersToForward(request);
+            String serviceID = getServiceID(profileRequestContext);
+            if(!serviceID.isEmpty())
+                headers.put("ServiceID",serviceID);
+
+            headers.put("X-Fowarded-For",getClientIP());
+
             PIResponse piResponse = privacyIDEA.triggerChallenges(piContext.getUsername(), headers);
 
             if (piResponse != null)

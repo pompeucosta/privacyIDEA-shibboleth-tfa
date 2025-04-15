@@ -18,6 +18,8 @@ package org.privacyidea.action;
 import net.shibboleth.idp.Version;
 import net.shibboleth.idp.authn.context.AuthenticationContext;
 import net.shibboleth.idp.profile.AbstractProfileAction;
+import net.shibboleth.idp.profile.context.RelyingPartyContext;
+
 import org.opensaml.profile.action.ActionSupport;
 import org.opensaml.profile.context.ProfileRequestContext;
 import org.privacyidea.Challenge;
@@ -140,6 +142,31 @@ public class ChallengeResponseAction extends AbstractProfileAction implements IP
     protected void doExecute(@Nonnull ProfileRequestContext profileRequestContext, @Nonnull PIContext piContext,
                              @Nonnull PIServerConfigContext piServerConfigContext)
     {}
+
+    protected String getClientIP() {
+        final HttpServletRequest request = getHttpServletRequest();
+        String clientIP = request.getRemoteAddr();
+        String forwardFor = request.getHeader("X-Forwarded-For");
+        if(forwardFor != null) {
+            LOGGER.debug("X-Forwarded-For header value: {}", forwardFor);
+            clientIP = forwardFor.split(",")[0];
+        }
+
+        LOGGER.debug("Client IP addr: {}",clientIP);
+        return clientIP;
+    }
+
+    protected String getServiceID(ProfileRequestContext profileRequestContext) {
+        final RelyingPartyContext metadataContext = profileRequestContext.getSubcontext(RelyingPartyContext.class);
+        if(metadataContext != null) {
+            String serviceID = metadataContext.getRelyingPartyId();
+            LOGGER.debug("serviceID: {}",serviceID);
+            return serviceID == null ? "" : serviceID;
+        }
+
+        LOGGER.debug("metadata context is null");
+        return "";
+    }
 
     /**
      * Extract message from server response, and save it in form context.

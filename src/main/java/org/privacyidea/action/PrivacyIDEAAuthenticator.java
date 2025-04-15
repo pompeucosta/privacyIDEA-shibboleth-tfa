@@ -15,7 +15,6 @@
  */
 package org.privacyidea.action;
 
-// import jakarta.servlet.http.HttpServletRequest;
 import org.opensaml.profile.action.ActionSupport;
 import org.opensaml.profile.context.ProfileRequestContext;
 import org.privacyidea.ChallengeStatus;
@@ -43,6 +42,12 @@ public class PrivacyIDEAAuthenticator extends ChallengeResponseAction
     {
         HttpServletRequest request = Objects.requireNonNull(getHttpServletRequest());
         Map<String, String> headers = this.getHeadersToForward(request);
+
+        String serviceID = getServiceID(profileRequestContext);
+        if(!serviceID.isEmpty())
+            headers.put("ServiceID",serviceID);
+
+        headers.put("X-Fowarded-For",getClientIP());
 
         piContext.setMode(request.getParameterValues("mode")[0]);
         piContext.setWebauthnSignResponse(request.getParameterValues("webauthnSignResponse")[0]);

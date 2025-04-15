@@ -15,7 +15,6 @@
  */
 package org.privacyidea.action;
 
-import java.util.function.Function;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import net.shibboleth.idp.authn.AbstractAuthenticationAction;
